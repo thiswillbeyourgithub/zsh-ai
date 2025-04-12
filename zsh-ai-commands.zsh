@@ -5,6 +5,7 @@ if [[ ${(%):-%N} == zsh-ai-commands.zsh ]]; then
   # Check if required tools are installed
   (( ! $+commands[fzf] )) && return 1
   (( ! $+commands[curl] )) && return 1
+  (( ! $+commands[jq] )) && return 1
 fi
 
 (( ! ${+ZSH_AI_HOTKEY} )) && typeset -g ZSH_AI_HOTKEY='^o'
