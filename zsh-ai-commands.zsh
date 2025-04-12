@@ -4,9 +4,6 @@
 (( ! $+commands[fzf] )) && return
 (( ! $+commands[curl] )) && return
 
-# Check if if OpenAi API key ist set
-(( ! ${+ZSH_AI_OPENAI_API_KEY} )) && echo "zsh-ai-commands::Error::No API key set in the env var ZSH_AI_OPENAI_API_KEY. Plugin will not be loaded" && return
-
 (( ! ${+ZSH_AI_HOTKEY} )) && typeset -g ZSH_AI_HOTKEY='^o'
 
 (( ! ${+ZSH_AI_LLM_NAME} )) && typeset -g ZSH_AI_LLM_NAME='best'
