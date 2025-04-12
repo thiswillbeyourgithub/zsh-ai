@@ -39,16 +39,16 @@ fzf_ai_commands() {
   zle end-of-line
   zle reset-prompt
 
-  ZSH_AI_GPT_SYSTEM="You only answer up to $ZSH_AI_N_GENERATIONS appropriate shell one liner that does what the user asks for. The user is using the $(basename $SHELL) shell and his setup infos are '$(uname --kernel-name --kernel-release --kernel-version)'. You answer using structured output. If your answer uses arguments or flags, you MUST include an md bullet point list of explanations for each.Don't explain self explanatory placeholders like <ip> or <serverport> etc. If you are certain this cannot be done with only a one liner, you can define reply a shell function declaration instead."
+  ZSH_AI_GPT_SYSTEM="You only answer up to $ZSH_AI_N_GENERATIONS appropriate shell one liner that does what the user asks for. The user is using the $(basename $SHELL) shell and his setup infos are '$(uname --kernel-name --kernel-release --kernel-version)'. You answer using structured output. If your answer uses arguments or flags, you MUST include an '-' separated md bullet point list of explanations for each (omit self explanatory placeholders like <ip> or <serverport>). You have to give a one liner otherwise my parsing of your output will fail!"
 
-  ZSH_AI_PARSED=$(llm -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'code str, explain str' "$ZSH_AI_USER_QUERY")
+  # also use sed to replace newlines of json otherwise the parsing fails
+  ZSH_AI_PARSED=$(llm -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'code str, explain str' "$ZSH_AI_USER_QUERY" | sed -z 's/\\n-/ZSHNEWLINE- /g')
 
-  ZSH_AI_SUGG_COMMANDS=$(echo $ZSH_AI_PARSED | jq -r '.["items"][]["code"]')
-  ZSH_AI_SUGG_EXPLANATION=$(echo $ZSH_AI_PARSED | jq -r '.["items"][]["explain"]')
-  
-  export ZSH_AI_SUGG_COMMENTS  # otherwise fzf can't access it
-  ZSH_AI_SELECTED=$(echo $ZSH_AI_SUGG_COMMANDS | fzf --reverse --height=~100% --preview-window down:wrap --preview 'echo "$ZSH_AI_SUGG_COMMENTS" | sed -n "$(({n}+1))"p | sed "s/;/\n/g" | sed "s/^\s*//g;s/\s*$//g"')
+  ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["code"]')
+  ZSH_AI_SUGG_EXPLAIN=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["explain"]')
 
+  export ZSH_AI_PARSED
+  ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf --reverse --height=~100% --preview-window down:wrap --preview 'echo "$ZSH_AI_PARSED" | jq -r ".[\"items\"][{n}][\"explain\"]" | sed -z "s/ZSHNEWLINE/\n/g"')
 
   # get the answers
   BUFFER=$ZSH_AI_SELECTED
