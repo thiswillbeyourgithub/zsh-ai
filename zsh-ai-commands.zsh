@@ -17,18 +17,18 @@ fzf_ai_commands() {
 
   [ -n "$BUFFER" ] || { echo "Empty prompt" ; return }
 
-  BUFFER="$(echo "$BUFFER" | sed 's/^AI_ASK: //g')"
+  BUFFER="$(echo "$BUFFER" | sed 's/^ZSH_AI: //g')"
 
   ZSH_AI_USER_QUERY=$BUFFER
 
   if [ $ZSH_AI_HISTORY = true ]
   then
     # save to history
-    echo "AI_ASK: $ZSH_AI_USER_QUERY" >> $HISTFILE
+    echo "ZSH_AI: $ZSH_AI_USER_QUERY" >> $HISTFILE
     # also to atuin's history if installed
     if command -v atuin &> /dev/null;
     then
-        atuin_id=$(atuin history start "AI_ASK: $ZSH_AI_USER_QUERY")
+        atuin_id=$(atuin history start "ZSH_AI: $ZSH_AI_USER_QUERY")
         atuin history end --exit 0 "$atuin_id"
     fi
   fi
