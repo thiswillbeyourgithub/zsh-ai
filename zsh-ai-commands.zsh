@@ -1,8 +1,11 @@
 #!/bin/zsh
 
-# Check if required tools are installed
-(( ! $+commands[fzf] )) && return 1
-(( ! $+commands[curl] )) && return 1
+# Only check for required tools when being sourced
+if [[ ${(%):-%N} == zsh-ai-commands.zsh ]]; then
+  # Check if required tools are installed
+  (( ! $+commands[fzf] )) && return 1
+  (( ! $+commands[curl] )) && return 1
+fi
 
 (( ! ${+ZSH_AI_HOTKEY} )) && typeset -g ZSH_AI_HOTKEY='^o'
 
@@ -80,7 +83,7 @@ fzf_ai_commands() {
 
   zle end-of-line
   zle reset-prompt
-  return $ret
+  return 0
 }
 
 autoload fzf_ai_commands
