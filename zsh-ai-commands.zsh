@@ -63,7 +63,7 @@ fzf_ai_commands() {
 
           ((i++))
       done
-      ZSH_AI_SUGG_CODE=$result
+      ZSH_AI_SUGG_CODE="$result"
   )
 
   export ZSH_AI_PARSED  # otherwise can't be reached by fzf
@@ -73,6 +73,9 @@ fzf_ai_commands() {
     ) || (
         echo "Error when invoking fzf, trying with jj instead of jq"
         ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf --reverse --height=~100% --preview-window down:wrap --preview 'echo "$ZSH_AI_PARSED" | jj -r .items.{n}.json_escaped_explain | sed "s/<br>/\n/g" ' )
+    ) || (
+        echo "Error again when invoking fzf with jj, retrying without explainers"
+        ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf --reverse --height=~100% )
   )
 
   # get the answers
