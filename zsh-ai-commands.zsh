@@ -50,7 +50,7 @@ fzf_ai_commands() {
       result=""
       i=0
       while true; do
-          item=$(echo $thevar | jj ".items.$i.json_escaped_code")
+          item=$(echo "$ZSH_AI_PARSED" | jj ".items.$i.json_escaped_code")
 
           # Break if empty result is returned
           [[ -z "$item" ]] && break
