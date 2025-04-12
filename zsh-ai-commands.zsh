@@ -48,7 +48,7 @@ fzf_ai_commands() {
   ) || (
       echo "Code parsing fails using jq so retrying with jj"
       result=""
-      i=0
+      i=1
       while true; do
           item=$(echo "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code)
 
