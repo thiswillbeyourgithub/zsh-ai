@@ -49,12 +49,8 @@ fzf_ai_commands() {
       echo "Code parsing fails using jq so retrying with jj"
       result=""
       i=1
-      while true; do
-          item=$(echo "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code)
-
-          # Break if empty result is returned
-          [[ -z "$item" ]] && break
-
+      item=$(echo "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code)
+      while [[ -n "$item" ]]; do
           # Add newline if not the first item
           [[ -n "$result" ]] && result+=$'\n'
 
@@ -62,6 +58,7 @@ fzf_ai_commands() {
           result+="$item"
 
           ((i++))
+          item=$(echo "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code)
       done
       ZSH_AI_SUGG_CODE="$result"
   )
