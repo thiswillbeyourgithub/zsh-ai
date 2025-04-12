@@ -10,7 +10,7 @@
 
 (( ! ${+ZSH_AI_N_GENERATIONS} )) && typeset -g ZSH_AI_N_GENERATIONS=5
 
-(( ! ${+ZSH_AI_HISTORY} )) && typeset -g ZSH_AI_HISTORY=false
+(( ! ${+ZSH_AI_HISTORY} )) && typeset -g ZSH_AI_HISTORY=true
 
 fzf_ai_commands() {
   setopt extendedglob
