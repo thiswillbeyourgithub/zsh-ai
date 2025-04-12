@@ -12,6 +12,8 @@
 
 (( ! ${+ZSH_AI_HISTORY} )) && typeset -g ZSH_AI_HISTORY=true
 
+(( ! ${+ZSH_AI_MAX_RETRIES} )) && typeset -g ZSH_AI_MAX_RETRIES=3
+
 fzf_ai_commands() {
   setopt extendedglob
 
@@ -39,16 +41,59 @@ fzf_ai_commands() {
   zle end-of-line
   zle reset-prompt
 
-  ZSH_AI_GPT_SYSTEM="You only answer up to $ZSH_AI_N_GENERATIONS appropriate shell one liner that does what the user asks for. The user is using the $(basename $SHELL) shell and his setup infos are '$(uname --kernel-name --kernel-release --kernel-version)'. You answer using structured output. If your answer uses arguments or flags, you MUST include an '-' separated md bullet point list of explanations for each (omit self explanatory placeholders like <ip> or <serverport>). You have to give a one liner otherwise my parsing of your output will fail!"
+  ZSH_AI_GPT_SYSTEM="You only answer up to $ZSH_AI_N_GENERATIONS appropriate shell one liner that does what the user asks for. The user is using the $(basename $SHELL) shell and his setup infos are '$(uname --kernel-name --kernel-release --kernel-version)'. You answer using structured output. If your answer uses arguments or flags, you MUST include a text with brief explanations for each (omit self explanatory placeholders like <ip> or <serverport>). NEVER forget to properly escape ALL newlines, pipes, etc in your answer as it will be parsed as indented json! And this applies to both code and explanations! I know this is weird to write md with escaped newlines but you have to."
 
   # also use sed to replace newlines of json otherwise the parsing fails
-  ZSH_AI_PARSED=$(llm -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'code str, explain str' "$ZSH_AI_USER_QUERY" | sed -z 's/\\n-/ZSHNEWLINE- /g')
+  ZSH_AI_PARSED=$(llm -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'json_escaped_code, json_escaped_explain' "$ZSH_AI_USER_QUERY")
 
-  ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["code"]')
-  ZSH_AI_SUGG_EXPLAIN=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["explain"]')
+  # try to escape any forgotten newline
+  ZSH_AI_PARSED=$(echo "$ZSH_AI_PARSED" | sed -z 's/^\([^{}\[\] ]\)/\\n\1/g')
 
+  # Configure max number of retry attempts
+  # Array to store error messages
+  error_messages=()
+  
+  # Initial attempt
+  success=false
+  for attempt in {1..$ZSH_AI_MAX_RETRIES}; do
+    if [[ $attempt -eq 1 ]]; then
+      # First attempt with original parsed output
+      parsed_output="$ZSH_AI_PARSED"
+    else
+      # Retry attempts with corrected output
+      echo "\nAttempt $attempt: Asking the LLM to correct previous errors."
+      parsed_output=$(llm -m "$ZSH_AI_LLM_NAME" -s "You gave me an improperly escaped output format for my json pipeline. The errors were: ${(j:, :)error_messages}. Please fix these errors and any other error that could impact the formatting." --schema-multi 'json_escaped_code, json_escaped_explain' "$ZSH_AI_PARSED")
+    fi
+    
+    # Try parsing with jq
+    error=$(echo "$parsed_output" | jq '.items' 2>&1)
+    if [[ $? -eq 0 ]]; then
+      success=true
+      break
+    else
+      # Store error message in array
+      error_messages+=("$error")
+      echo "\nError parsing answer using jq: '$error'"
+    fi
+  done
+  
+  # Handle final result
+  if ! $success; then
+    echo "\nFailed after $ZSH_AI_MAX_RETRIES attempts. All errors: ${(j:\n:)error_messages}"
+    echo "\nHere is the full LLM output:\n$ZSH_AI_PARSED"
+    return 1
+  else
+    ZSH_AI_PARSED=$parsed_output
+  fi
+
+  # modify the code output so that it ends with a delimiter for fzf
+  ZSH_AI_PARSED=$(echo "$ZSH_AI_PARSED" | jq '.items = (.items | map(.json_escaped_code += "ZSH_AI_END_OF_CODE"))')
+
+  ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_code"]')
+
+  # otherwise fzf can't reach it
   export ZSH_AI_PARSED
-  ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf --reverse --height=~100% --preview-window down:wrap --preview 'echo "$ZSH_AI_PARSED" | jq -r ".[\"items\"][{n}][\"explain\"]" | sed -z "s/ZSHNEWLINE/\n/g"')
+  ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf --separator "ZSH_AI_END_OF_CODE" --reverse --height=~100% --preview-window down:wrap --preview 'echo "$ZSH_AI_PARSED" | jq -r ".[\"items\"][{n}][\"json_escaped_explain\"]"')
 
   # get the answers
   BUFFER=$ZSH_AI_SELECTED
