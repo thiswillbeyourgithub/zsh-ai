@@ -1,8 +1,8 @@
 #!/bin/zsh
 
 # Check if required tools are installed
-(( ! $+commands[fzf] )) && return
-(( ! $+commands[curl] )) && return
+(( ! $+commands[fzf] )) && return 1
+(( ! $+commands[curl] )) && return 1
 
 (( ! ${+ZSH_AI_HOTKEY} )) && typeset -g ZSH_AI_HOTKEY='^o'
 
@@ -15,7 +15,7 @@
 fzf_ai_commands() {
   setopt extendedglob
 
-  [ -n "$BUFFER" ] || { echo "Empty prompt" ; return }
+  [ -n "$BUFFER" ] || { echo "Empty prompt" ; return 1 }
 
   BUFFER="$(echo "$BUFFER" | sed 's/^ZSH_AI: //g')"
 
