@@ -48,25 +48,26 @@ fzf_ai_commands() {
 
   ZSH_AI_PARSED=$(llm -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'json_escaped_code, json_escaped_explain' "$ZSH_AI_USER_QUERY")
 
-  (
-      ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_code"]')
-  ) || (
-      echo "Code parsing fails using jq so retrying with jj"
-      result=""
-      i=1
-      item=$(echo "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code)
-      while [[ -n "$item" ]]; do
-          # Add newline if not the first item
-          [[ -n "$result" ]] && result+=$'\n'
-
-          # Append the new item
-          result+="$item"
-
-          ((i++))
-          item=$(echo "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code)
-      done
-      ZSH_AI_SUGG_CODE="$result"
-  )
+  ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_code"]')
+  # (
+  #     ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_code"]')
+  # ) || (
+  #     echo "Code parsing fails using jq so retrying with jj"
+  #     result=""
+  #     i=1
+  #     item=$(echo "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code)
+  #     while [[ -n "$item" ]]; do
+  #         # Add newline if not the first item
+  #         [[ -n "$result" ]] && result+=$'\n'
+  #
+  #         # Append the new item
+  #         result+="$item"
+  #
+  #         ((i++))
+  #         item=$(echo "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code)
+  #     done
+  #     ZSH_AI_SUGG_CODE="$result"
+  # )
 
   export ZSH_AI_PARSED  # otherwise can't be reached by fzf
 
