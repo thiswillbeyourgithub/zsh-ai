@@ -39,7 +39,7 @@ fzf_ai_commands() {
   zle end-of-line
   zle reset-prompt
 
-  ZSH_AI_GPT_SYSTEM="You only answer up to $ZSH_AI_N_GENERATIONS appropriate shell one liner that does what the user asks for. The user is using the $(basename $SHELL) shell and his setup infos are '$(uname --kernel-name --kernel-release --kernel-version)'. You answer using structured output. If your answer uses arguments or flags, you MUST include an '-' separated md bullet point list of explanations for each (omit self explanatory placeholders like <ip> or <serverport>). Be careful to properly escape things because I will parse your answer expecting json, especially newlines, pipes, etc. You have to give a one liner otherwise my parsing of your output will fail!"
+  ZSH_AI_GPT_SYSTEM="You only answer up to $ZSH_AI_N_GENERATIONS appropriate shell one liner that does what the user asks for. The user is using the $(basename $SHELL) shell and his setup infos are '$(uname --kernel-name --kernel-release --kernel-version)'. You answer using structured output. If your answer uses arguments or flags, you MUST include a short paragraph to explain each (do omit self explanatory placeholders like <ip> or <serverport>). Be careful to properly escape things because I will parse your answer expecting json, especially newlines, pipes, etc. Your code can only be one liners otherwise my parsing of your output will fail!"
 
   # also use sed to replace newlines of json otherwise the parsing fails
   ZSH_AI_PARSED=$(llm -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'code str, explain str' "$ZSH_AI_USER_QUERY" | sed -z 's/\\n-/ZSHNEWLINE-/g')
