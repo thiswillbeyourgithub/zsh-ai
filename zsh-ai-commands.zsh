@@ -44,7 +44,6 @@ fzf_ai_commands() {
   ZSH_AI_PARSED=$(llm -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'json_escaped_code, json_escaped_explain' "$ZSH_AI_USER_QUERY")
 
   ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_code"]')
-  ZSH_AI_SUGG_EXPLAIN=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_explain"]')
 
   export ZSH_AI_PARSED
   ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf --reverse --height=~100% --preview-window down:wrap --preview 'echo "$ZSH_AI_PARSED" | jq -r ".[\"items\"][{n}][\"json_escaped_explain\"]" | sed "s/<br>/\n/g" ' )
