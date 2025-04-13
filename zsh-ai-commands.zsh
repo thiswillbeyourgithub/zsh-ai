@@ -99,6 +99,21 @@ fzf_ai_commands() {
   # get the answers
   BUFFER=$ZSH_AI_SELECTED
 
+  # Save all suggestions and the selected command to history
+  if [ $ZSH_AI_HISTORY = true ]; then
+    # Save all suggestions to history (except the selected one)
+    echo "$ZSH_AI_SUGG_CODE" | while read -r line; do
+      if [[ -n "$line" && "$line" != "$BUFFER" ]]; then
+        zsh_ai_save_to_history "SUGG: $line"
+      fi
+    done
+    
+    # Save the selected command to history
+    if [[ -n "$BUFFER" ]]; then
+      zsh_ai_save_to_history "SELEC: $BUFFER"
+    fi
+  fi
+
   zle end-of-line
   zle reset-prompt
   return 0
