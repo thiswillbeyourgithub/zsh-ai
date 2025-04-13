@@ -86,15 +86,19 @@ fzf_ai_commands() {
 
   export ZSH_AI_PARSED  # otherwise can't be reached by fzf
 
-  (
-      ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf --reverse --height=~100% --preview-window down:wrap --preview 'echo "$ZSH_AI_PARSED" | jq -r ".[\"items\"][{n}][\"json_escaped_explain\"]" | sed "s/<br>/\n/g" ' )
-    ) || (
-        echo "Error when invoking fzf, trying with jj instead of jq"
-        ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf --reverse --height=~100% --preview-window down:wrap --preview 'echo "$ZSH_AI_PARSED" | jj -r .items.{n}.json_escaped_explain | sed "s/<br>/\n/g" ' )
-    ) || (
-        echo "Error again when invoking fzf with jj, retrying without explainers"
-        ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf --reverse --height=~100% )
-  )
+  # Determine which preview command to use (jq or jj) by testing which one works
+  local preview_command
+  if echo "$ZSH_AI_PARSED" | jq -r '.["items"][0]["json_escaped_explain"]' &>/dev/null; then
+    preview_command='echo "$ZSH_AI_PARSED" | jq -r ".[\"items\"][{n}][\"json_escaped_explain\"]" | sed "s/<br>/\n/g"'
+  elif echo "$ZSH_AI_PARSED" | jj -r .items.0.json_escaped_explain &>/dev/null; then
+    preview_command='echo "$ZSH_AI_PARSED" | jj -r .items.{n}.json_escaped_explain | sed "s/<br>/\n/g"'
+  else
+    # If both fail, use a fallback with no preview
+    preview_command='echo "No explanation available"'
+  fi
+
+  # Single fzf call with dynamically determined preview command
+  ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf --reverse --height=~100% --preview-window down:wrap --preview "$preview_command")
 
   # get the answers
   BUFFER=$ZSH_AI_SELECTED
