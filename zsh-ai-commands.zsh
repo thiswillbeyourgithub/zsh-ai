@@ -38,7 +38,7 @@ fzf_ai_commands() {
 
   [ -n "$BUFFER" ] || { echo "Empty prompt" ; return 1 }
 
-  BUFFER="$(echo "$BUFFER" | sed 's/^ZSH_AI: //g')"
+  BUFFER="$(echo "$BUFFER" | sed 's/^ZSH_AI: //g' | sed 's/^SUGG: //g')"
 
   ZSH_AI_USER_QUERY=$BUFFER
 
