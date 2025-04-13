@@ -40,7 +40,7 @@ fzf_ai_commands() {
 
   [ -n "$BUFFER" ] || { echo "Empty prompt" ; return 1 }
 
-  ZSH_AI_USER_QUERY=$BUFFER
+  ZSH_AI_USER_QUERY="$BUFFER"
 
   zsh_ai_save_to_history "$ZSH_AI_USER_QUERY"
 
