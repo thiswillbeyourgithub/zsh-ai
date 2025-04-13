@@ -3,6 +3,7 @@
 # Only check for required tools when being sourced
 if [[ ${(%):-%N} == zsh-ai-commands.zsh ]]; then
   # Check if required tools are installed
+  (( ! $+commands[llm] )) && echo "llm is not installed, please use 'pip install llm'" && return 1
   (( ! $+commands[fzf] )) && echo "fzf is not installed" && return 1
   (( ! $+commands[jq] )) && echo "jq is not installed" && return 1
   (( ! $+commands[jj] )) && echo "jj is not installed, it is used as a fallback for jq. Install it from 'https://github.com/tidwall/jj/releases'" && return 1
