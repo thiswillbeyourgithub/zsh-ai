@@ -36,9 +36,9 @@ zsh_ai_save_to_history() {
 fzf_ai_commands() {
   setopt extendedglob
 
-  [ -n "$BUFFER" ] || { echo "Empty prompt" ; return 1 }
-
   BUFFER="$(echo "$BUFFER" | sed 's/^ZSH_AI: //g' | sed 's/^SUGG: //g'| sed 's/^SELEC: //g')"
+
+  [ -n "$BUFFER" ] || { echo "Empty prompt" ; return 1 }
 
   ZSH_AI_USER_QUERY=$BUFFER
 
