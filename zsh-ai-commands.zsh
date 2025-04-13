@@ -17,6 +17,8 @@ fi
 
 (( ! ${+ZSH_AI_HISTORY} )) && typeset -g ZSH_AI_HISTORY=true
 
+(( ! ${+ZSH_AI_FZF_OPTIONS} )) && typeset -g ZSH_AI_FZF_OPTIONS="--reverse --height=~100% --preview-window down:wrap"
+
 # Save a query to history with ZSH_AI prefix
 zsh_ai_save_to_history() {
   if [ $ZSH_AI_HISTORY = true ]
@@ -98,7 +100,7 @@ fzf_ai_commands() {
   fi
 
   # Single fzf call with dynamically determined preview command
-  ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf --reverse --height=~100% --preview-window down:wrap --preview "$preview_command")
+  ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf ${=ZSH_AI_FZF_OPTIONS} --preview "$preview_command")
 
   # Save all suggestions to history (except the selected one)
   echo "$ZSH_AI_SUGG_CODE" | while read -r line; do
