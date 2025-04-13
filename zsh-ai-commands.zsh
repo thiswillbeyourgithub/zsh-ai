@@ -100,22 +100,20 @@ fzf_ai_commands() {
   # Single fzf call with dynamically determined preview command
   ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf --reverse --height=~100% --preview-window down:wrap --preview "$preview_command")
 
-  # get the answers
-  BUFFER=$ZSH_AI_SELECTED
-
-  # Save all suggestions and the selected command to history
-  if [ $ZSH_AI_HISTORY = true ]; then
-    # Save all suggestions to history (except the selected one)
-    echo "$ZSH_AI_SUGG_CODE" | while read -r line; do
-      if [[ -n "$line" && "$line" != "$BUFFER" ]]; then
-        zsh_ai_save_to_history "SUGG: $line"
-      fi
-    done
-    
-    # Save the selected command to history
-    if [[ -n "$BUFFER" ]]; then
-      zsh_ai_save_to_history "SELEC: $BUFFER"
+  # Save all suggestions to history (except the selected one)
+  echo "$ZSH_AI_SUGG_CODE" | while read -r line; do
+    if [[ -n "$line" && "$line" != "$ZSH_AI_SELECTED" ]]; then
+      zsh_ai_save_to_history "SUGG: $line"
     fi
+  done
+  # Save the selected command to history as most recent
+  if [[ -n "$ZSH_AI_SELECTED" ]]; then
+    zsh_ai_save_to_history "SELEC: $ZSH_AI_SELECTED"
+  fi
+
+  # get the answer only if non empty, otherwise the user exited fzf
+  if [[ -n "$ZSH_AI_SELECTED" ]]; then
+    BUFFER=$ZSH_AI_SELECTED
   fi
 
   zle end-of-line
