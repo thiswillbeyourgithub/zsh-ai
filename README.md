@@ -10,6 +10,7 @@ When the AI responds with its suggestions, use fzf to select the command you wan
 
 ## Features
 
+- Lightweight implementation with < 150 lines of zsh code
 - Uses [llm](https://llm.datasette.io/) by [@simonw](https://github.com/simonw), which means you can use any LLM from any provider:
   - OpenRouter.ai (giving indirect access to OpenAI, Anthropic, Google Gemini, Meta, etc.)
   - Ollama for local models
