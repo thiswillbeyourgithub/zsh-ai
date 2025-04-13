@@ -113,7 +113,9 @@ fzf_ai_commands() {
 
   # get the answer only if non empty, otherwise the user exited fzf
   if [[ -n "$ZSH_AI_SELECTED" ]]; then
-    BUFFER=$ZSH_AI_SELECTED
+    BUFFER="$ZSH_AI_SELECTED"
+  else
+    BUFFER="$ZSH_AI_USER_QUERY"
   fi
 
   zle end-of-line
