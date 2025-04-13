@@ -43,6 +43,15 @@ Enable it in your `.zshrc` by adding it to your plugin list:
 plugins=(... zsh-ai ...)
 ```
 
+### Alternative: Direct sourcing
+
+You can also just clone the repository anywhere and source the zsh-ai.zsh file directly in your `.zshrc`:
+
+```sh
+git clone https://github.com/thiswillbeyourgithub/zsh-ai ~/.zsh-ai
+echo "source ~/.zsh-ai/zsh-ai.zsh" >> ~/.zshrc
+```
+
 You'll need to have the llm CLI tool properly configured with your API keys. Follow the instructions at [llm.datasette.io](https://llm.datasette.io/) to set up your preferred AI provider.
 
 ## Configuration Variables
