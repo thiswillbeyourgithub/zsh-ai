@@ -19,7 +19,7 @@ When the AI responds with its suggestions, use fzf to select the command you wan
 Clone the repository to your oh-my-zsh custom plugins folder:
 
 ```sh
-git clone https://github.com/muePatrick/zsh-ai ${ZSH_CUSTOM:=~/.oh-my-zsh/custom}/plugins/zsh-ai
+git clone https://github.com/thiswillbeyourgithub/zsh-ai ${ZSH_CUSTOM:=~/.oh-my-zsh/custom}/plugins/zsh-ai
 ```
 
 Enable it in your `.zshrc` by adding it to your plugin list:
