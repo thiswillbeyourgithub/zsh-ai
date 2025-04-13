@@ -8,6 +8,19 @@ This plugin helps you find terminal commands by asking AI for suggestions based 
 To use it just type what you want to do (e.g. `list all files in this directory`) and hit the configured hotkey (default: `Ctrl+o`).
 When the AI responds with its suggestions, use fzf to select the command you want to execute.
 
+## Features
+
+- Uses [llm](https://llm.datasette.io/) by [@simonw](https://github.com/simonw), which means you can use any LLM from any provider:
+  - OpenRouter.ai (giving indirect access to OpenAI, Anthropic, Google Gemini, Meta, etc.)
+  - Ollama for local models
+  - And many other providers
+- Robust LLM response parsing:
+  - Uses structured output format for reliable parsing
+  - Processes results through jq with jj as a fallback to ensure suggestions are captured
+- Each suggestion comes with:
+  - The actual command (one-liner)
+  - A detailed explanation accessible in the fzf preview pane
+
 ## Requirements
 * [llm](https://llm.datasette.io/) - CLI tool for accessing language models (`pip install llm`)
 * [fzf](https://github.com/junegunn/fzf) - Command-line fuzzy finder
@@ -41,6 +54,12 @@ You'll need to have the llm CLI tool properly configured with your API keys. Fol
 | `ZSH_AI_N_GENERATIONS` | `5`                                   | Number of command suggestions to generate                     |
 | `ZSH_AI_HISTORY`     | `true`                                  | Whether to save queries to shell history                      |
 | `ZSH_AI_FZF_OPTIONS` | `"--reverse --height=~100% --preview-window down:wrap"`| Options for fzf display                        |
+
+## Limitations
+- LLM requests can be slow to trigger (suggestions for improvements are welcome)
+- Multiline commands are intentionally not supported as parsing multiline output reliably is challenging
+  - This is why the prompt specifically asks for one-liners only
+- Help is appreciated for making the plugin faster and more reliable!
 
 ## Known Bugs
 - [ ] The placeholder message that should be shown while the AI request is running is not always displayed. For many users it only works if `zsh-autosuggestions` is enabled.
