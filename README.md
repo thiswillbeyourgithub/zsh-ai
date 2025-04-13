@@ -20,6 +20,8 @@ When the AI responds with its suggestions, use fzf to select the command you wan
 - Each suggestion comes with:
   - The actual command (one-liner)
   - A detailed explanation accessible in the fzf preview pane
+- Integrates with [atuin](https://atuin.sh/) if installed:
+  - All queries and selected commands are automatically added to atuin history
 
 ## Requirements
 * [llm](https://llm.datasette.io/) - CLI tool for accessing language models (`pip install llm`)
