@@ -1,6 +1,8 @@
 # ZSH AI
 ![zsh-ai-demo](./zsh-ai-demo.gif)
 
+> **Note:** This plugin is based on the original code from [muePatrick/zsh-ai-commands](https://github.com/muePatrick/zsh-ai-commands) which I gradually improved for my personal use.
+
 This plugin helps you find terminal commands by asking AI for suggestions based on your natural language description.
 
 To use it just type what you want to do (e.g. `list all files in this directory`) and hit the configured hotkey (default: `Ctrl+o`).
