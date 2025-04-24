@@ -11,10 +11,22 @@ fi
 (( ! ${+ZSH_AI_HOTKEY} )) && typeset -g ZSH_AI_HOTKEY='^o'
 
 # Define the path to the llm binary, try to find it if not set
-(( ! ${+ZSH_AI_LLM_BIN} )) && typeset -g ZSH_AI_LLM_BIN=$(which llm 2>/dev/null)
-# Check if ZSH_AI_LLM_BIN is set and points to an executable
+# Check if llm command exists (alias, function, or external)
+if (( ! $+commands[llm] )); then
+  echo "llm command not found. Please install llm ('pip install llm')." && return 1
+fi
+
+# Define the path to the llm binary, try to find it if not set
+# Use 'type -p' to find the executable path, even if aliased
+(( ! ${+ZSH_AI_LLM_BIN} )) && typeset -g ZSH_AI_LLM_BIN=$(type -p llm 2>/dev/null)
+
+# Check if ZSH_AI_LLM_BIN was found and points to an executable
 if [[ -z "$ZSH_AI_LLM_BIN" || ! -x "$ZSH_AI_LLM_BIN" ]]; then
-  echo "llm executable not found or not executable. Please install llm ('pip install llm') or set ZSH_AI_LLM_BIN manually." && return 1
+  # If type -p failed, llm might be a function or alias without a direct executable path
+  # Or the found path is not executable
+  # We still need an executable for the script to call
+  echo "Could not find an executable path for llm. If llm is an alias or function, ensure it ultimately calls an executable llm command."
+  echo "Alternatively, set the ZSH_AI_LLM_BIN environment variable manually to the llm executable path." && return 1
 fi
 
 (( ! ${+ZSH_AI_LLM_NAME} )) && typeset -g ZSH_AI_LLM_NAME='openrouter/google/gemini-2.5-pro-preview-03-25'
