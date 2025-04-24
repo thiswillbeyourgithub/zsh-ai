@@ -1,15 +1,21 @@
 #!/bin/zsh
 
 # Only check for required tools when being sourced
-if [[ ${(%):-%N} == zsh-ai-commands.zsh ]]; then
+if [[ ${(%):-%N} == zsh-ai.zsh ]]; then
   # Check if required tools are installed
-  (( ! $+commands[llm] )) && echo "llm is not installed, please use 'pip install llm'" && return 1
   (( ! $+commands[fzf] )) && echo "fzf is not installed" && return 1
   (( ! $+commands[jq] )) && echo "jq is not installed" && return 1
   (( ! $+commands[jj] )) && echo "jj is not installed, it is used as a fallback for jq. Install it from 'https://github.com/tidwall/jj/releases'" && return 1
 fi
 
 (( ! ${+ZSH_AI_HOTKEY} )) && typeset -g ZSH_AI_HOTKEY='^o'
+
+# Define the path to the llm binary, try to find it if not set
+(( ! ${+ZSH_AI_LLM_BIN} )) && typeset -g ZSH_AI_LLM_BIN=$(which llm 2>/dev/null)
+# Check if ZSH_AI_LLM_BIN is set and points to an executable
+if [[ -z "$ZSH_AI_LLM_BIN" || ! -x "$ZSH_AI_LLM_BIN" ]]; then
+  echo "llm executable not found or not executable. Please install llm ('pip install llm') or set ZSH_AI_LLM_BIN manually." && return 1
+fi
 
 (( ! ${+ZSH_AI_LLM_NAME} )) && typeset -g ZSH_AI_LLM_NAME='openrouter/google/gemini-2.5-pro-preview-03-25'
 
@@ -54,7 +60,8 @@ fzf_ai_commands() {
 
   ZSH_AI_GPT_SYSTEM="You only answer up to $ZSH_AI_N_GENERATIONS appropriate shell one liner that does what the user asks for. The user is using the $(basename $SHELL) shell and his setup infos are '$(uname --kernel-name --kernel-release --kernel-version)'. Today's date is '$(date "+%Y-%m-%d (%A, %B %d, %Y)")'. You answer using structured output. If your answer uses arguments or flags, you MUST include a short paragraph to explain each (do omit self explanatory placeholders like <ip> or <serverport>). Be careful to properly escape things because I will parse your answer expecting json, especially newlines, pipes, etc. Your code can only be one liners otherwise my parsing of your output will fail! So only use a single paragraph without newlines in your explainer. For the explainer you can specify newlines using '<br>' though, I will replace them by a newline for readability so you can format one argument per line for example."
 
-  ZSH_AI_PARSED=$(llm -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'json_escaped_code, json_escaped_explain' "$ZSH_AI_USER_QUERY")
+  # Call the llm binary using the configured path
+  ZSH_AI_PARSED=$("$ZSH_AI_LLM_BIN" -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'json_escaped_code, json_escaped_explain' "$ZSH_AI_USER_QUERY")
 
   # Try with jq first
   ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_code"]' 2>/dev/null)
