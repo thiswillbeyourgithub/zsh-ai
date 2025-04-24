@@ -68,7 +68,7 @@ You'll need to have the llm CLI tool properly configured with your API keys. Fol
 | `ZSH_AI_FZF_OPTIONS` | `"--reverse --height=~100% --preview-window down:wrap"`| Options for fzf display                        |
 
 ## Limitations
-- LLM requests can be slow to trigger (suggestions for improvements are welcome)
+- LLM requests can be slow to trigger (suggestions for improvements are welcome). I was able to cut the launch time by 60% by creating a venv using `uv venv zsh_ai_llm --python 3.13 && source ./zsh_ai_llm/bin/activate && uv pip install llm` then `export ZSH_AI_LLM_BIN="path/to/zsh_ai_llm/bin/llm`.
 - Multiline commands are intentionally not supported as parsing multiline output reliably is challenging
   - This is why the prompt specifically asks for one-liners only
 - Help is appreciated for making the plugin faster and more reliable!
