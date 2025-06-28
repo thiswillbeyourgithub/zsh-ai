@@ -78,3 +78,5 @@ You'll need to have the llm CLI tool properly configured with your API keys. Fol
 
 ## Credits
 This plugin was developed with help from [aider.chat](https://github.com/Aider-AI/aider/issues).
+As stated above:
+> **Note:** This plugin is based on the original code from [muePatrick/zsh-ai-commands](https://github.com/muePatrick/zsh-ai-commands) which I gradually improved for my personal use.
