@@ -82,6 +82,13 @@ fzf_ai_commands() {
   # Call the llm binary using the configured path
   ZSH_AI_PARSED=$("$ZSH_AI_LLM_BIN" -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'json_escaped_code, json_escaped_explain' "$ZSH_AI_USER_QUERY")
 
+  # remove characters until it starts with { and ends with }
+  temp=${ZSH_AI_PARSED#*\{}
+  # Add back the {
+  temp="{"$temp
+  # Remove everything after last }
+  ZSH_AI_PARSED=${temp%\}*}"}"
+
   # Try with jq first
   ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_code"]' 2>/dev/null)
   
