@@ -81,7 +81,7 @@ fzf_ai_commands() {
 
   # Call the llm binary using the configured path
   echo "\nCalling llm..."
-  ZSH_AI_PARSED=$("$ZSH_AI_LLM_BIN" -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'json_escaped_code, json_escaped_explain' "$ZSH_AI_USER_QUERY")
+  ZSH_AI_PARSED=$("$ZSH_AI_LLM_BIN" -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'json_escaped_code, json_escaped_explanation' "$ZSH_AI_USER_QUERY")
   echo "\nParsing llm anser..."
 
   # remove characters until it starts with { and ends with }
@@ -126,10 +126,10 @@ fzf_ai_commands() {
 
   # Determine which preview command to use (jq or jj) by testing which one works
   local preview_command
-  if echo "$ZSH_AI_PARSED" | jq -r '.["items"][0]["json_escaped_explain"]' &>/dev/null; then
-    preview_command='echo "$ZSH_AI_PARSED" | jq -r ".[\"items\"][{n}][\"json_escaped_explain\"]" | sed "s/<br>/\n/g"'
-  elif echo "$ZSH_AI_PARSED" | jj -r .items.0.json_escaped_explain &>/dev/null; then
-    preview_command='echo "$ZSH_AI_PARSED" | jj -r .items.{n}.json_escaped_explain | sed "s/<br>/\n/g"'
+  if echo "$ZSH_AI_PARSED" | jq -r '.["items"][0]["json_escaped_explanation"]' &>/dev/null; then
+    preview_command='echo "$ZSH_AI_PARSED" | jq -r ".[\"items\"][{n}][\"json_escaped_explanation\"]" | sed "s/<br>/\n/g"'
+  elif echo "$ZSH_AI_PARSED" | jj -r .items.0.json_escaped_explanation &>/dev/null; then
+    preview_command='echo "$ZSH_AI_PARSED" | jj -r .items.{n}.json_escaped_explanation | sed "s/<br>/\n/g"'
   else
     # If both fail, use a fallback with no preview
     preview_command='echo "No explanation available"'
