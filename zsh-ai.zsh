@@ -1,5 +1,6 @@
 #!/bin/zsh
 
+set -euo pipefail
 
 (( ! ${+ZSH_AI_HOTKEY} )) && typeset -g ZSH_AI_HOTKEY='^o'
 
