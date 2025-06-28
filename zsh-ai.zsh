@@ -18,14 +18,14 @@ fi
 
 # Define the path to the llm binary, try to find it if not set
 # Use 'type -p' to find the executable path, even if aliased
-(( ! ${+ZSH_AI_LLM_BIN} )) && typeset -g ZSH_AI_LLM_BIN=$(type -p llm 2>/dev/null)
+(( ! ${+ZSH_AI_LLM_BIN} )) && typeset -g ZSH_AI_LLM_BIN=$(type -p llm | cut -d' ' -f3 2>/dev/null)
 
 # Check if ZSH_AI_LLM_BIN was found and points to an executable
 if [[ -z "$ZSH_AI_LLM_BIN" || ! -x "$ZSH_AI_LLM_BIN" ]]; then
   # If type -p failed, llm might be a function or alias without a direct executable path
   # Or the found path is not executable
   # We still need an executable for the script to call
-  echo "Could not find an executable path for llm. If llm is an alias or function, ensure it ultimately calls an executable llm command."
+  echo "Could not find an executable path for llm at '$ZSH_AI_LLM_BIN'. If llm is an alias or function, ensure it ultimately calls an executable llm command."
   echo "Alternatively, set the ZSH_AI_LLM_BIN environment variable manually to the llm executable path." && return 1
 fi
 
