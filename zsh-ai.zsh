@@ -102,6 +102,7 @@ fzf_ai_commands() {
   # If we still don't have code suggestions, show error and exit
   if [[ -z "$ZSH_AI_SUGG_CODE" ]]; then
     echo "Failed to parse AI suggestions. Please try again."
+    BUFFER="$ZSH_AI_USER_QUERY"
     return 1
   fi
 
