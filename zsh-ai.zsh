@@ -81,9 +81,17 @@ fzf_ai_commands() {
   ZSH_AI_GPT_SYSTEM="You only answer up to $ZSH_AI_N_GENERATIONS appropriate shell one liner that does what the user asks for. The user is using the $(basename $SHELL) shell and his setup infos are '$(uname --kernel-name --kernel-release --kernel-version)'. Today's date is '$(date "+%Y-%m-%d (%A, %B %d, %Y)")'. You answer using structured output. If your answer uses arguments or flags, you MUST include a short paragraph to explain each (do omit self explanatory placeholders like <ip> or <serverport>). Be careful to properly escape things because I will parse your answer expecting json, especially newlines, pipes, etc. Your code can only be one liners otherwise my parsing of your output will fail! So only use a single paragraph without newlines in your explainer. For the explainer you can specify newlines using '<br>' though, I will replace them by a newline for readability so you can format one argument per line for example. Phrase it as military documentation, so very much to the point (i.e. don't start by 'this command blabla')"
 
   # Call the llm binary using the configured path
-  echo "\nCalling llm..."
-  ZSH_AI_PARSED=$("$ZSH_AI_LLM_BIN" -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'json_escaped_code, json_escaped_explanation' "$ZSH_AI_USER_QUERY")
-  echo "\nParsing llm anser..."
+  echo "\n"
+  echo "Calling llm..."
+  ZSH_AI_TEMP_FILE=$(mktemp)
+  "$ZSH_AI_LLM_BIN" -m "$ZSH_AI_LLM_NAME" -s "$ZSH_AI_GPT_SYSTEM" --schema-multi 'json_escaped_code, json_escaped_explanation' "$ZSH_AI_USER_QUERY" > "$ZSH_AI_TEMP_FILE" &
+  ZSH_AI_JOB_PID=$!
+  while [[ ! -s "$ZSH_AI_TEMP_FILE" ]]; do sleep 0.1; done
+  echo "Waiting for llm to finish..."
+  wait $ZSH_AI_JOB_PID || true
+  ZSH_AI_PARSED=$(<"$ZSH_AI_TEMP_FILE")
+  rm "$ZSH_AI_TEMP_FILE"
+  echo "\nParsing llm answer..."
 
   # remove characters until it starts with { and ends with }
   temp=${ZSH_AI_PARSED#*\{}
