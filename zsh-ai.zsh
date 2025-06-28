@@ -1,41 +1,44 @@
 #!/bin/zsh
 
-# Only check for required tools when being sourced
-if [[ ${(%):-%N} == zsh-ai.zsh ]]; then
-  # Check if required tools are installed
-  (( ! $+commands[fzf] )) && echo "fzf is not installed" && return 1
-  (( ! $+commands[jq] )) && echo "jq is not installed" && return 1
-  (( ! $+commands[jj] )) && echo "jj is not installed, it is used as a fallback for jq. Install it from 'https://github.com/tidwall/jj/releases'" && return 1
-fi
 
 (( ! ${+ZSH_AI_HOTKEY} )) && typeset -g ZSH_AI_HOTKEY='^o'
 
-# Define the path to the llm binary, try to find it if not set
-# Check if llm command exists (alias, function, or external)
-if (( ! $+commands[llm] )); then
-  echo "llm command not found. Please install llm ('pip install llm')." && return 1
-fi
+# Only check for required tools when being launched
+setup_zsh_ai() {
+  if [[ ${(%):-%N} == zsh-ai.zsh ]]; then
+    # Check if required tools are installed
+    (( ! $+commands[fzf] )) && echo "fzf is not installed" && return 1
+    (( ! $+commands[jq] )) && echo "jq is not installed" && return 1
+    (( ! $+commands[jj] )) && echo "jj is not installed, it is used as a fallback for jq. Install it from 'https://github.com/tidwall/jj/releases'" && return 1
+  fi
 
-# Define the path to the llm binary, try to find it if not set
-# Use 'type -p' to find the executable path, even if aliased
-(( ! ${+ZSH_AI_LLM_BIN} )) && typeset -g ZSH_AI_LLM_BIN=$(type -p llm | cut -d' ' -f3 2>/dev/null)
+  # Define the path to the llm binary, try to find it if not set
+  # Check if llm command exists (alias, function, or external)
+  if (( ! $+commands[llm] )); then
+    echo "llm command not found. Please install llm ('pip install llm')." && return 1
+  fi
 
-# Check if ZSH_AI_LLM_BIN was found and points to an executable
-if [[ -z "$ZSH_AI_LLM_BIN" || ! -x "$ZSH_AI_LLM_BIN" ]]; then
-  # If type -p failed, llm might be a function or alias without a direct executable path
-  # Or the found path is not executable
-  # We still need an executable for the script to call
-  echo "Could not find an executable path for llm at '$ZSH_AI_LLM_BIN'. If llm is an alias or function, ensure it ultimately calls an executable llm command."
-  echo "Alternatively, set the ZSH_AI_LLM_BIN environment variable manually to the llm executable path." && return 1
-fi
+  # Define the path to the llm binary, try to find it if not set
+  # Use 'type -p' to find the executable path, even if aliased
+  (( ! ${+ZSH_AI_LLM_BIN} )) && typeset -g ZSH_AI_LLM_BIN=$(type -p llm | cut -d' ' -f3 2>/dev/null)
 
-(( ! ${+ZSH_AI_LLM_NAME} )) && typeset -g ZSH_AI_LLM_NAME='openrouter/google/gemini-2.5-pro-preview'
+  # Check if ZSH_AI_LLM_BIN was found and points to an executable
+  if [[ -z "$ZSH_AI_LLM_BIN" || ! -x "$ZSH_AI_LLM_BIN" ]]; then
+    # If type -p failed, llm might be a function or alias without a direct executable path
+    # Or the found path is not executable
+    # We still need an executable for the script to call
+    echo "Could not find an executable path for llm at '$ZSH_AI_LLM_BIN'. If llm is an alias or function, ensure it ultimately calls an executable llm command."
+    echo "Alternatively, set the ZSH_AI_LLM_BIN environment variable manually to the llm executable path." && return 1
+  fi
 
-(( ! ${+ZSH_AI_N_GENERATIONS} )) && typeset -g ZSH_AI_N_GENERATIONS=5
+  (( ! ${+ZSH_AI_LLM_NAME} )) && typeset -g ZSH_AI_LLM_NAME='openrouter/google/gemini-2.5-pro-preview'
 
-(( ! ${+ZSH_AI_HISTORY} )) && typeset -g ZSH_AI_HISTORY=true
+  (( ! ${+ZSH_AI_N_GENERATIONS} )) && typeset -g ZSH_AI_N_GENERATIONS=5
 
-(( ! ${+ZSH_AI_FZF_OPTIONS} )) && typeset -g ZSH_AI_FZF_OPTIONS="--reverse --height=~100% --preview-window down:wrap"
+  (( ! ${+ZSH_AI_HISTORY} )) && typeset -g ZSH_AI_HISTORY=true
+
+  (( ! ${+ZSH_AI_FZF_OPTIONS} )) && typeset -g ZSH_AI_FZF_OPTIONS="--reverse --height=~100% --preview-window down:wrap"
+}
 
 # Save a query to history with ZSH_AI prefix
 zsh_ai_save_to_history() {
@@ -53,8 +56,11 @@ zsh_ai_save_to_history() {
   fi
 }
 
+
 fzf_ai_commands() {
   setopt extendedglob
+
+  setup_zsh_ai
 
   BUFFER="$(echo "$BUFFER" | sed 's/^ZSH_AI: //g' | sed 's/^SUGG: //g'| sed 's/^SELEC: //g')"
 
