@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-ZSH_AI_VERSION="1.0.0"
+ZSH_AI_VERSION="1.1.0"
 
 (( ! ${+ZSH_AI_HOTKEY} )) && typeset -g ZSH_AI_HOTKEY='^o'
 
