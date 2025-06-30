@@ -124,6 +124,12 @@ fzf_ai_commands() {
     
     # Only set if we got results
     [[ -n "$result" ]] && ZSH_AI_SUGG_CODE="$result"
+    
+    # If jj also failed, try grep/sed fallback
+    if [[ -z "$ZSH_AI_SUGG_CODE" ]]; then
+      echo "Code parsing fails using jj so retrying with grep/sed"
+      ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | grep "json_escaped_code" | sed 's/^[[:space:]]*"json_escaped_code":[[:space:]]*"//' | sed 's/"[[:space:]]*,*[[:space:]]*$//' | sed 's/\\"/"/g' | sed 's/\\\\/\\/g')
+    fi
   fi
   
   # If we still don't have code suggestions, show error and exit
@@ -142,8 +148,8 @@ fzf_ai_commands() {
   elif echo "$ZSH_AI_PARSED" | jj -r .items.0.json_escaped_explanation &>/dev/null; then
     preview_command='echo "$ZSH_AI_PARSED" | jj -r .items.{n}.json_escaped_explanation | sed "s/<br>/\n/g"'
   else
-    # If both fail, use a fallback with no preview
-    preview_command='echo "No explanation available"'
+    # Fallback to grep/sed if both jq and jj fail
+    preview_command='echo "$ZSH_AI_PARSED" | grep "json_escaped_explanation" | sed -n "$((({n}+1)))p" | sed "s/^[[:space:]]*\"json_escaped_explanation\":[[:space:]]*\"//" | sed "s/\"[[:space:]]*,*[[:space:]]*$//" | sed "s/\\\\\"/\"/g" | sed "s/\\\\\\\\/\\\\/g" | sed "s/<br>/\n/g"'
   fi
 
   # Single fzf call with dynamically determined preview command
