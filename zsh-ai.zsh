@@ -23,7 +23,7 @@ setup_zsh_ai() {
 
   # Define the path to the llm binary, try to find it if not set
   # Use 'type -p' to find the executable path, even if aliased
-  (( ! ${+ZSH_AI_LLM_BIN} )) && typeset -g ZSH_AI_LLM_BIN=$(type -p llm | cut -d' ' -f3 2>/dev/null)
+  (( ! ${+ZSH_AI_LLM_BIN} )) && typeset -g ZSH_AI_LLM_BIN=$(type llm | sed 's/llm is //g')
 
   # Check if ZSH_AI_LLM_BIN was found and points to an executable
   if [[ -z "$ZSH_AI_LLM_BIN" || ! -x "$ZSH_AI_LLM_BIN" ]]; then
