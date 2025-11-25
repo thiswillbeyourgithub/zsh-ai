@@ -34,7 +34,7 @@ setup_zsh_ai() {
     echo "Alternatively, set the ZSH_AI_LLM_BIN environment variable manually to the llm executable path." && return 1
   fi
 
-  (( ! ${+ZSH_AI_LLM_NAME} )) && typeset -g ZSH_AI_LLM_NAME='openrouter/google/gemini-2.5-pro-preview'
+  (( ! ${+ZSH_AI_LLM_NAME} )) && typeset -g ZSH_AI_LLM_NAME='o4-mini'
 
   (( ! ${+ZSH_AI_N_GENERATIONS} )) && typeset -g ZSH_AI_N_GENERATIONS=5
 
