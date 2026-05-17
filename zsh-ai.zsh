@@ -102,9 +102,16 @@ fzf_ai_commands() {
   # Remove everything after last }
   ZSH_AI_PARSED=${temp%\}*}"}"
 
-  # Try with jq first
-  ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_code"]' 2>/dev/null)
-  
+  # Fix a common LLM over-escape: '\\"' inside a JSON string is invalid
+  # (parses as backslash + premature end-of-string). The LLM almost always
+  # meant '\"' (escaped quote). Normalize it before handing to jq.
+  ZSH_AI_PARSED=${ZSH_AI_PARSED//'\\"'/'\"'}
+
+  # Try with jq first. Collapse any multiline command to a single line:
+  # backslash-newline (shell line continuation) becomes a space, any remaining
+  # newline becomes "; " so fzf shows one suggestion per line.
+  ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_code"] | gsub("\\\\\n"; " ") | gsub("\n"; "; ")' 2>/dev/null)
+
   # If jq failed or returned empty, try with jj
   if [[ $? -ne 0 || -z "$ZSH_AI_SUGG_CODE" ]]; then
     echo "Code parsing fails using jq so retrying with jj"
@@ -112,23 +119,29 @@ fzf_ai_commands() {
     i=1
     item=$(echo "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code 2>/dev/null)
     while [[ $? -eq 0 && -n "$item" ]]; do
+      # Normalize multiline output to a single line (see jq branch above)
+      item="${item//\\$'\n'/ }"
+      item="${item//$'\n'/; }"
+
       # Add newline if not the first item
       [[ -n "$result" ]] && result+=$'\n'
-      
+
       # Append the new item
       result+="$item"
-      
+
       ((i++))
       item=$(echo "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code 2>/dev/null)
     done
-    
+
     # Only set if we got results
     [[ -n "$result" ]] && ZSH_AI_SUGG_CODE="$result"
-    
-    # If jj also failed, try grep/sed fallback
+
+    # If jj also failed, try grep/sed fallback. The grep path keeps JSON
+    # escapes literal, so collapse "\\n" / "\n" into "; " on top of the
+    # existing unescaping.
     if [[ -z "$ZSH_AI_SUGG_CODE" ]]; then
       echo "Code parsing fails using jj so retrying with grep/sed"
-      ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | grep "json_escaped_code" | sed 's/^[[:space:]]*"json_escaped_code":[[:space:]]*"//' | sed 's/"[[:space:]]*,*[[:space:]]*$//' | sed 's/\\"/"/g' | sed 's/\\\\/\\/g')
+      ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | grep "json_escaped_code" | sed 's/^[[:space:]]*"json_escaped_code":[[:space:]]*"//' | sed 's/"[[:space:]]*,*[[:space:]]*$//' | sed 's/\\"/"/g' | sed 's/\\\\n/; /g' | sed 's/\\n/; /g' | sed 's/\\\\/\\/g')
     fi
   fi
   
