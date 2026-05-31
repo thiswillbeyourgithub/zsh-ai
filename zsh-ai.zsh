@@ -65,7 +65,7 @@ fzf_ai_commands() {
 
   setup_zsh_ai
 
-  BUFFER="$(echo "$BUFFER" | sed 's/^ZSH_AI: //g' | sed 's/^SUGG: //g'| sed 's/^SELEC: //g')"
+  BUFFER="$(print -r -- "$BUFFER" | sed 's/^ZSH_AI: //g' | sed 's/^SUGG: //g'| sed 's/^SELEC: //g')"
 
   [ -n "$BUFFER" ] || { echo "Empty prompt" ; return 1 }
 
@@ -110,14 +110,14 @@ fzf_ai_commands() {
   # Try with jq first. Collapse any multiline command to a single line:
   # backslash-newline (shell line continuation) becomes a space, any remaining
   # newline becomes "; " so fzf shows one suggestion per line.
-  ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_code"] | gsub("\\\\\n"; " ") | gsub("\n"; "; ")' 2>/dev/null)
+  ZSH_AI_SUGG_CODE=$(print -r -- "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_code"] | gsub("\\\\\n"; " ") | gsub("\n"; "; ")' 2>/dev/null)
 
   # If jq failed or returned empty, try with jj
   if [[ $? -ne 0 || -z "$ZSH_AI_SUGG_CODE" ]]; then
     echo "Code parsing fails using jq so retrying with jj"
     result=""
     i=1
-    item=$(echo "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code 2>/dev/null)
+    item=$(print -r -- "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code 2>/dev/null)
     while [[ $? -eq 0 && -n "$item" ]]; do
       # Normalize multiline output to a single line (see jq branch above)
       item="${item//\\$'\n'/ }"
@@ -130,7 +130,7 @@ fzf_ai_commands() {
       result+="$item"
 
       ((i++))
-      item=$(echo "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code 2>/dev/null)
+      item=$(print -r -- "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code 2>/dev/null)
     done
 
     # Only set if we got results
@@ -141,7 +141,7 @@ fzf_ai_commands() {
     # existing unescaping.
     if [[ -z "$ZSH_AI_SUGG_CODE" ]]; then
       echo "Code parsing fails using jj so retrying with grep/sed"
-      ZSH_AI_SUGG_CODE=$(echo "$ZSH_AI_PARSED" | grep "json_escaped_code" | sed 's/^[[:space:]]*"json_escaped_code":[[:space:]]*"//' | sed 's/"[[:space:]]*,*[[:space:]]*$//' | sed 's/\\"/"/g' | sed 's/\\\\n/; /g' | sed 's/\\n/; /g' | sed 's/\\\\/\\/g')
+      ZSH_AI_SUGG_CODE=$(print -r -- "$ZSH_AI_PARSED" | grep "json_escaped_code" | sed 's/^[[:space:]]*"json_escaped_code":[[:space:]]*"//' | sed 's/"[[:space:]]*,*[[:space:]]*$//' | sed 's/\\"/"/g' | sed 's/\\\\n/; /g' | sed 's/\\n/; /g' | sed 's/\\\\/\\/g')
     fi
   fi
   
@@ -156,9 +156,9 @@ fzf_ai_commands() {
 
   # Determine which preview command to use (jq or jj) by testing which one works
   local preview_command
-  if echo "$ZSH_AI_PARSED" | jq -r '.["items"][0]["json_escaped_explanation"]' &>/dev/null; then
+  if print -r -- "$ZSH_AI_PARSED" | jq -r '.["items"][0]["json_escaped_explanation"]' &>/dev/null; then
     preview_command='echo "$ZSH_AI_PARSED" | jq -r ".[\"items\"][{n}][\"json_escaped_explanation\"]" | sed "s/<br>/\n/g"'
-  elif echo "$ZSH_AI_PARSED" | jj -r .items.0.json_escaped_explanation &>/dev/null; then
+  elif print -r -- "$ZSH_AI_PARSED" | jj -r .items.0.json_escaped_explanation &>/dev/null; then
     preview_command='echo "$ZSH_AI_PARSED" | jj -r .items.{n}.json_escaped_explanation | sed "s/<br>/\n/g"'
   else
     # Fallback to grep/sed if both jq and jj fail
@@ -166,10 +166,10 @@ fzf_ai_commands() {
   fi
 
   # Single fzf call with dynamically determined preview command
-  ZSH_AI_SELECTED=$(echo "$ZSH_AI_SUGG_CODE" | fzf ${=ZSH_AI_FZF_OPTIONS} --preview "$preview_command")
+  ZSH_AI_SELECTED=$(print -r -- "$ZSH_AI_SUGG_CODE" | fzf ${=ZSH_AI_FZF_OPTIONS} --preview "$preview_command")
 
   # Save all suggestions to history (except the selected one)
-  echo "$ZSH_AI_SUGG_CODE" | while read -r line; do
+  print -r -- "$ZSH_AI_SUGG_CODE" | while read -r line; do
     if [[ -n "$line" && "$line" != "$ZSH_AI_SELECTED" ]]; then
       zsh_ai_save_to_history "SUGG: $line"
     fi
