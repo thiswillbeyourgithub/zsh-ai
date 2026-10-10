@@ -120,8 +120,12 @@ fzf_ai_commands() {
 
   # Fix a common LLM over-escape: '\\"' inside a JSON string is invalid
   # (parses as backslash + premature end-of-string). The LLM almost always
-  # meant '\"' (escaped quote). Normalize it before handing to jq.
-  ZSH_AI_PARSED=${ZSH_AI_PARSED//'\\"'/'\"'}
+  # meant '\"' (escaped quote). Only normalize when the JSON is actually
+  # invalid: valid JSON like '\\\"' (escaped backslash + escaped quote) would
+  # otherwise be corrupted into '\\"' and get truncated at the backslash.
+  if ! print -r -- "$ZSH_AI_PARSED" | jq -e . &>/dev/null; then
+    ZSH_AI_PARSED=${ZSH_AI_PARSED//'\\"'/'\"'}
+  fi
 
   # Try with jq first. Items are NUL-separated so multiline commands survive
   # intact until zsh_ai_oneline collapses each one to a single fzf line.
