@@ -59,6 +59,22 @@ zsh_ai_save_to_history() {
   fi
 }
 
+# Collapse a possibly multiline command into a single line so fzf shows one
+# suggestion per entry. Escaped newlines (shell line continuations, even with
+# trailing blanks, CRLF or LLM over-escaped '\\') become a space, any other
+# newline becomes "; ".
+# Example: $'find . \\  \r\n  -name x\necho done\n' -> 'find . -name x; echo done'
+zsh_ai_oneline() {
+  setopt localoptions extendedglob
+  local s="$1"
+  # Trim surrounding whitespace first so a trailing newline does not become "; "
+  s="${s##[[:space:]]#}"
+  s="${s%%[[:space:]]#}"
+  s="${s//[[:blank:]]#\\##[[:blank:]]#$'\r'#$'\n'[[:blank:]]#/ }"
+  s="${s//[[:blank:]]#$'\r'#$'\n'[[:blank:]]#/; }"
+  s="${s//$'\r'/}"
+  print -r -- "$s"
+}
 
 fzf_ai_commands() {
   setopt extendedglob
@@ -107,21 +123,27 @@ fzf_ai_commands() {
   # meant '\"' (escaped quote). Normalize it before handing to jq.
   ZSH_AI_PARSED=${ZSH_AI_PARSED//'\\"'/'\"'}
 
-  # Try with jq first. Collapse any multiline command to a single line:
-  # backslash-newline (shell line continuation) becomes a space, any remaining
-  # newline becomes "; " so fzf shows one suggestion per line.
-  ZSH_AI_SUGG_CODE=$(print -r -- "$ZSH_AI_PARSED" | jq -r '.["items"][]["json_escaped_code"] | gsub("\\\\\n"; " ") | gsub("\n"; "; ")' 2>/dev/null)
+  # Try with jq first. Items are NUL-separated so multiline commands survive
+  # intact until zsh_ai_oneline collapses each one to a single fzf line.
+  ZSH_AI_SUGG_CODE=""
+  local jq_items
+  jq_items=$(print -r -- "$ZSH_AI_PARSED" | jq -j '.["items"][]["json_escaped_code"] | ., "\u0000"' 2>/dev/null) || jq_items=""
+  local item
+  for item in "${(0)jq_items}"; do
+    item=$(zsh_ai_oneline "$item")
+    [[ -z "$item" ]] && continue
+    [[ -n "$ZSH_AI_SUGG_CODE" ]] && ZSH_AI_SUGG_CODE+=$'\n'
+    ZSH_AI_SUGG_CODE+="$item"
+  done
 
   # If jq failed or returned empty, try with jj
-  if [[ $? -ne 0 || -z "$ZSH_AI_SUGG_CODE" ]]; then
+  if [[ -z "$ZSH_AI_SUGG_CODE" ]]; then
     echo "Code parsing fails using jq so retrying with jj"
     result=""
     i=1
     item=$(print -r -- "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code 2>/dev/null)
     while [[ $? -eq 0 && -n "$item" ]]; do
-      # Normalize multiline output to a single line (see jq branch above)
-      item="${item//\\$'\n'/ }"
-      item="${item//$'\n'/; }"
+      item=$(zsh_ai_oneline "$item")
 
       # Add newline if not the first item
       [[ -n "$result" ]] && result+=$'\n'
