@@ -140,7 +140,7 @@ fzf_ai_commands() {
   if [[ -z "$ZSH_AI_SUGG_CODE" ]]; then
     echo "Code parsing fails using jq so retrying with jj"
     result=""
-    i=1
+    i=0
     item=$(print -r -- "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code 2>/dev/null)
     while [[ $? -eq 0 && -n "$item" ]]; do
       item=$(zsh_ai_oneline "$item")
