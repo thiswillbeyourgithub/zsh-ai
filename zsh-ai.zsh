@@ -59,12 +59,16 @@ zsh_ai_save_to_history() {
   fi
 }
 
-# Collapse a possibly multiline command into a single line so fzf shows one
-# suggestion per entry. Escaped newlines (shell line continuations, even with
-# trailing blanks, CRLF or LLM over-escaped '\\') become a space, any other
-# newline becomes "; ".
-# Example: $'find . \\  \r\n  -name x\necho done\n' -> 'find . -name x; echo done'
-zsh_ai_oneline() {
+# Clean up one suggested command before showing it in fzf.
+# 1. Collapse it into a single line so fzf shows one suggestion per entry.
+#    Escaped newlines (shell line continuations, even with trailing blanks,
+#    CRLF or LLM over-escaped '\\') become a space, any other newline "; ".
+#    Example: $'find . \\  \r\n  -name x\necho done\n' -> 'find . -name x; echo done'
+# 2. Undo LLM over-escaped quotes: if every double quote is escaped, the LLM
+#    almost surely meant plain quotes.
+#    Example: 'ffmpeg -i \"concat:a|b\" out.mp4' -> 'ffmpeg -i "concat:a|b" out.mp4'
+#    Mixed quoting such as 'echo "say \"hi\""' is left untouched.
+zsh_ai_clean_suggestion() {
   setopt localoptions extendedglob
   local s="$1"
   # Trim surrounding whitespace first so a trailing newline does not become "; "
@@ -73,6 +77,9 @@ zsh_ai_oneline() {
   s="${s//[[:blank:]]#\\##[[:blank:]]#$'\r'#$'\n'[[:blank:]]#/ }"
   s="${s//[[:blank:]]#$'\r'#$'\n'[[:blank:]]#/; }"
   s="${s//$'\r'/}"
+  if [[ "$s" == *'\"'* && "${s//'\"'/}" != *'"'* ]]; then
+    s="${s//'\"'/\"}"
+  fi
   print -r -- "$s"
 }
 
@@ -128,13 +135,13 @@ fzf_ai_commands() {
   fi
 
   # Try with jq first. Items are NUL-separated so multiline commands survive
-  # intact until zsh_ai_oneline collapses each one to a single fzf line.
+  # intact until zsh_ai_clean_suggestion turns each one into a single fzf line.
   ZSH_AI_SUGG_CODE=""
   local jq_items
   jq_items=$(print -r -- "$ZSH_AI_PARSED" | jq -j '.["items"][]["json_escaped_code"] | ., "\u0000"' 2>/dev/null) || jq_items=""
   local item
   for item in "${(0)jq_items}"; do
-    item=$(zsh_ai_oneline "$item")
+    item=$(zsh_ai_clean_suggestion "$item")
     [[ -z "$item" ]] && continue
     [[ -n "$ZSH_AI_SUGG_CODE" ]] && ZSH_AI_SUGG_CODE+=$'\n'
     ZSH_AI_SUGG_CODE+="$item"
@@ -147,7 +154,7 @@ fzf_ai_commands() {
     i=0
     item=$(print -r -- "$ZSH_AI_PARSED" | jj items.$i.json_escaped_code 2>/dev/null)
     while [[ $? -eq 0 && -n "$item" ]]; do
-      item=$(zsh_ai_oneline "$item")
+      item=$(zsh_ai_clean_suggestion "$item")
 
       # Add newline if not the first item
       [[ -n "$result" ]] && result+=$'\n'
