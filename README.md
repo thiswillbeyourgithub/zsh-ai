@@ -62,7 +62,7 @@ You'll need to have the llm CLI tool properly configured with your API keys. Fol
 | Variable             | Default                                 | Description                                                   |
 | -------------------- | --------------------------------------- | ------------------------------------------------------------- |
 | `ZSH_AI_HOTKEY`      | `'^o'` (Ctrl+o)                         | Hotkey to trigger the request                                 |
-| `ZSH_AI_LLM_NAME`    | `'openrouter/google/gemini-2.5-pro-preview-03-25'` | Language model to use                             |
+| `ZSH_AI_LLM_NAME`    | `'openrouter/google/gemini-3.8-flash'`             | Language model to use                             |
 | `ZSH_AI_N_GENERATIONS` | `5`                                   | Number of command suggestions to generate                     |
 | `ZSH_AI_HISTORY`     | `true`                                  | Whether to save queries to shell history                      |
 | `ZSH_AI_FZF_OPTIONS` | `"--reverse --height=~100% --preview-window down:wrap"`| Options for fzf display                        |
